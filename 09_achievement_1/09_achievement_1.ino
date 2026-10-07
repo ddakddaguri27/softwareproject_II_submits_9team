@@ -20,10 +20,8 @@
 
 // global variables
 unsigned long last_sampling_time;   // unit: msec
-float dist_prev = _DIST_MAX;        // Distance last-measured
-float dist_ema;                     // EMA distance
+float dist_ema = 0.0;                     // EMA distance
 
-bool ema_initialized = false;       // when to calculate
 float dist_samples[N];              // array of samples
 int sample_count = 0;
 
@@ -52,35 +50,9 @@ void loop() {
   dist_raw = USS_measure(PIN_TRIG,PIN_ECHO);
 
 
-  // Check whether mesurement is valid, and if it is valid, add to sample
-  if ((dist_raw == 0.0) || (dist_raw < _DIST_MIN) || (dist_raw > _DIST_MAX)) {
-    measurement_valid = false;
-  }
-  else {
-    measurement_valid = true;
-    addSample(dist_raw);
-  }
+  addSample(dist_raw);
 
-
-  // Calculate median
-  if (sample_count > 0) {
-    median = getMedian();
-
-    // Initialize EMA with the first median value
-    if (!ema_initialized) {
-      dist_ema = median;
-      ema_initialized = true;
-    }
-    else {
-      // EMA equation
-      dist_ema = _EMA_ALPHA * median
-                 + (1 - _EMA_ALPHA) * dist_ema;
-    }
-  }
-  else {
-    // No valid sample has been stored yet
-    median = 0.0;
-  }
+  median = getMedian();
 
 
   // output the distance to the serial port
